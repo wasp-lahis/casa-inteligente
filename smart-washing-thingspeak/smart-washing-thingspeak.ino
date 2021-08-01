@@ -3,40 +3,65 @@
    Created by:  Lahis Almeida
    Release:     1.0
    Date:        01/08/2021
+   
    Description: This programa implement a Smart Washing Notifier. It's responsabile to:
-    - read LDR sensor value
-    - calibrate not operate mode (light off) value
+    - TO DO hide credentials
+    - TO DO read LDR sensor value
+    - TO DO calibrate not operate mode (light off) value
     - connect to WiFi
     - connect to MQTT Cloud Thingspeak
-    - send Washing Status
+    - TO DO send LDR value and Washing Status
 */
 
 #include <string.h> 
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include "credentials.h"
 
 /* Light Sensor */
 // defines pins numbers
-const int analogPIN = 4;  //D2
+const int analogPIN = 4;  // 0 to 4095.
 
 
 /* Wi-Fi Connection*/
-const char* ssid     = "Zizi";
-const char* password = "casadazizi";
+const char* ssid     = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 /* MQTT Protocol */
-const char* mqtt_user = "smart-washing";
-const char* mqtt_server = "mqtt.thingspeak.com";
-const int mqtt_port = 1883;
-// char* topic= "channels/<channelID/publish/<channelAPI>
-const char* mqtt_topic = "channels/1461278/publish/DV9RINDKHP8RCJMF";
+const char* mqtt_user = MQTT_USERNAME;
+const char* mqtt_server = MQTT_SERVER;
+const int   mqtt_port = MQTT_PORT;
 
+// char* topic= "channels/<channelID/publish/<channelAPI>
+char mqtt_topic[ 
+  sizeof("channels/") + 
+  sizeof(TSPEAK_CHANNEL_ID) + 
+  sizeof("/publish/") + 
+  sizeof(TSPEAK_CHANNEL_WRITE_API_KEY)] = "";
+
+  
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+
+/**
+   Generate MQTT topic string.
+   @param none
+   @return
+   @see http://www.cplusplus.com/reference/cstring/strcat/
+*/
+void generateMqttTopics(){
+  strcpy(mqtt_topic, "channels/");
+  strcat(mqtt_topic, TSPEAK_CHANNEL_ID);
+  strcat(mqtt_topic, "/publish/");
+  strcat(mqtt_topic, TSPEAK_CHANNEL_WRITE_API_KEY);
+}
+
+
 /**
    Send any MQTT message to the broker. The Thingspeak message content can constain 8 fields.
+   @param none
    @return
    @see https://www.youtube.com/watch?v=yRtc_UKuJuU
 */
@@ -63,9 +88,11 @@ void sendMessageToBroker() {
   //  payload+="&field2=";
   //  payload+=0;
   payload+="&status=MQTTPUBLISH";
+
+  generateMqttTopics();
   
-  Serial.print("PUB: ");
-  Serial.println(payload);
+  Serial.print("TOPIC: ");
+  Serial.println(mqtt_topic);
   Serial.print("MSG: ");
   Serial.println(payload);
   
@@ -108,7 +135,10 @@ void setup() {
 
   // Serial Initialization
   Serial.begin(115200); // Starts the serial communication
+  delay(2000);
   
+  Serial.print("\n----------------TESTE----------------\n");
+  Serial.println(TSPEAK_CHANNEL_ID);
 }
 
 void loop() {
