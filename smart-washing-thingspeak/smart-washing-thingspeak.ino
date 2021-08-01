@@ -10,7 +10,8 @@
     - TO DO calibrate not operate mode (light off) value
     - connect to WiFi
     - connect to MQTT Cloud Thingspeak
-    - TO DO send LDR value and Washing Status
+    - TO DO filter measures
+    - send LDR value and Washing Status
 */
 
 #include <string.h> 
@@ -20,7 +21,9 @@
 
 /* Light Sensor */
 // defines pins numbers
-const int analogPIN = 4;  // 0 to 4095.
+byte analogPIN = 36;  
+unsigned int LDRmeasure = 1024;  // 0 to 4095.
+unsigned int DEACTIVATE = 1024;  // 0 to 4095.
 
 
 /* Wi-Fi Connection*/
@@ -60,7 +63,7 @@ void generateMqttTopics(){
 
 
 /**
-   Send any MQTT message to the broker. The Thingspeak message content can constain 8 fields.
+   Send any MQTT message to the broker. The Thingspeak message content can constain only 8 fields.
    @param none
    @return
    @see https://www.youtube.com/watch?v=yRtc_UKuJuU
@@ -83,11 +86,13 @@ void sendMessageToBroker() {
   }
 
   // if you get here you have connected to the WiFi
+  
+  // The Thingspeak message content can constain only 8 fields.
   String payload = "field1=";
-  payload += micros();
-  //  payload+="&field2=";
-  //  payload+=0;
-  payload+="&status=MQTTPUBLISH";
+  payload += LDRmeasure;
+  payload +="&field2=";
+  payload += (LDRmeasure > DEACTIVATE) ? "WASHING MODE" : "DEACTIVATE MODE" ;
+  payload +="&status=MQTTPUBLISH";
 
   generateMqttTopics();
   
